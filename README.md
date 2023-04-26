@@ -1,0 +1,1 @@
+# reCaptcha-Solver.user.js
