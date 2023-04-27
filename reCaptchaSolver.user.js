@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         reCaptcha v2 image solver - noCaptchaAi
-// @name:ar      reCaptcha v2 image solver - noCaptchaAi حلال
-// @name:ru      noCaptchaAI Решатель капчи reCaptcha v2 image
+// @name         reCAPTCHA v2 image solver - noCaptchaAi
+// @name:ar      reCAPTCHA v2 image solver - noCaptchaAi حلال
+// @name:ru      noCaptchaAI Решатель капчи reCAPTCHA v2 image
 // @name:sh-CN   noCaptchaAI 验证码求解器
 // @namespace    https://nocaptchaai.com
 // @version      3.9.0
