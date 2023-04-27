@@ -4,14 +4,14 @@
 // @name:ru      noCaptchaAI Решатель капчи reCaptcha v2 image
 // @name:sh-CN   noCaptchaAI 验证码求解器
 // @namespace    https://nocaptchaai.com
-// @version      3.8.9
+// @version      3.8.10
 // @run-at       document-start
 // @description  reCaptcha Solver automated Captcha Solver bypass Ai service. Free 6000 🔥solves/month! 50x⚡ faster than 2Captcha & others
 // @description:ar تجاوز برنامج Captcha Solver الآلي لخدمة reCaptcha Solver خدمة Ai. 6000 🔥 حل / شهر مجاني! 50x⚡ أسرع من 2Captcha وغيرها
 // @description:ru reCaptcha Solver автоматизирует решение Captcha Solver в обход сервиса Ai. Бесплатно 6000 🔥решений/месяц! В 50 раз⚡ быстрее, чем 2Captcha и другие
 // @description:zh-CN reCaptcha Solver 自动绕过 Ai 服务的 Captcha Solver。 免费 6000 🔥解决/月！ 比 2Captcha 和其他人快 50x⚡
 // @author       noCaptcha AI, Diego and Subcode
-// @match        *://*/*
+// @match        http*://*/*
 // @match        https://config.nocaptchaai.com/*
 // @icon         https://avatars.githubusercontent.com/u/110127579
 // @require      https://cdn.jsdelivr.net/npm/sweetalert2@11
@@ -25,7 +25,6 @@
 // @grant        GM_getValue
 // @license      MIT
 // ==/UserScript==
-
 (async () => {
     const searchParams = new URLSearchParams(location.search);
     const isWidget = /#frame=checkbox/.test(location.hash);
@@ -51,7 +50,10 @@
     let sitekey, wait = 666; //temp
 
     XMLHttpRequest.prototype.open = function () {
-        this.addEventListener("load", runSolver);
+        if(location.href.includes("recaptcha/api2")){
+            log(location.href);
+            this.addEventListener("load", runSolver);
+        }
         open.apply(this, arguments);
     }
 
@@ -71,7 +73,6 @@
         });
 
     } else if (location.hostname === "config.nocaptchaai.com") {
-
         if (searchParams.has("apikey") && searchParams.has("plan") && document.referrer === "https://dash.nocaptchaai.com/") {
             cfg.set("APIKEY", searchParams.get("apikey"));
             cfg.set("PLAN", searchParams.get("plan"));
@@ -192,33 +193,95 @@
         }
     }
 
+    function isFrameVisible(element) {
+        var style = window.getComputedStyle(element);
+        if (element.offsetParent === null) {
+            return false;
+        }else{
+            return true;
+        }     
+    }
+
+    function isCaptchaFrame() {
+        if(document.getElementById('recaptcha-anchor')){
+            return true;
+        }
+        return false;
+    }
+
+    function hasCaptchas(){
+        var iframes = document.getElementsByTagName('iframe');
+        for (var i = 0; i < iframes.length; i++) {
+          if (iframes[i].title === "reCAPTCHA") {
+            return true;
+          }
+        }
+        return false;
+    }
+
+    function msgVisibleCaptchas(){
+        var iframes = document.getElementsByTagName('iframe');
+        for (var i = 0; i < iframes.length; i++) {
+            if (iframes[i].title === "reCAPTCHA") {
+                var visible = isFrameVisible(iframes[i]);
+                if(visible){
+                    iframes[i].contentWindow.postMessage('reCaptchaVisible', '*');
+                }else{
+                    iframes[i].contentWindow.postMessage('reCaptchaHidden', '*');
+                }
+            }
+        }
+    }
+
+    let captchaVisible = false;
+    window.addEventListener('message', function(event) {
+        if(event.data==="reCaptchaVisible"){
+            if(!captchaVisible){
+                log("Captcha Visible");
+                captchaVisible = true;
+            }
+        }else if(event.data==="reCaptchaHidden"){
+            if(captchaVisible){
+                log("Captcha Hidden");
+                captchaVisible = false;
+            }
+        }
+    });
+
     let captchaOpened = false;
     while (!(!navigator.onLine || isApikeyEmpty)) {
         await sleep(1000);
-        if (cfg.get("CHECKBOX_AUTO_OPEN") && isWidget) {
-            const isSolved = document.querySelector("div.check")?.style.display === "block";
 
-            if (isSolved && !cfg.get("LOOP")) {
-                log("found solved");
-                // location.reload();
+        if (!isCaptchaFrame()) {
+            if(hasCaptchas()){
+                msgVisibleCaptchas();
+            }else{
                 break;
             }
+        }else if(captchaVisible){
+            if (cfg.get("CHECKBOX_AUTO_OPEN") && isWidget) {
+                const isSolved = document.querySelector("div.check")?.style.display === "block";
 
-            fireMouseEvents(document.querySelector("#checkbox"))
+                if (isSolved && !cfg.get("LOOP")) {
+                    log("found solved");
+                    // location.reload();
+                    break;
+                }
 
-        } else if (cfg.get("CHECKBOX_AUTO_OPEN") && document.contains(document.querySelector('.recaptcha-checkbox')) && !captchaOpened) {
-            log("opening recaptcha");
-            captchaOpened = true;
-            fireMouseEvents(document.querySelector("#recaptcha-anchor"));
-        } else if (recapExpired()) {
-            // check for expired captcha
-            log("recaptcha expired");
-            captchaOpened = false;
-        } else if (recapSolved()) {
-            log("recaptcha solved");
-            break;
-        } else if (!document.getElementById('recaptcha-anchor')) {
-            break;
+                fireMouseEvents(document.querySelector("#checkbox"))
+
+            } else if (cfg.get("CHECKBOX_AUTO_OPEN") && document.contains(document.querySelector('.recaptcha-checkbox')) && !captchaOpened) {
+                log("opening recaptcha");
+                captchaOpened = true;
+                fireMouseEvents(document.querySelector("#recaptcha-anchor"));
+            } else if (recapExpired()) {
+                // check for expired captcha
+                log("recaptcha expired");
+                captchaOpened = false;
+            } else if (recapSolved()) {
+                log("recaptcha solved");
+                break;
+            }
         }
     }
 
@@ -240,7 +303,7 @@
             return recapReload();
         }
 
-        const data = await apiFetch({
+        const data = await apiSolve({
             images,
             target,
             type: 'split_33',
@@ -329,7 +392,7 @@
             case "new":
                 log("⏳ waiting a second");
                 await sleep(1000);
-                data = await apiFetch({}, beta, "status?id=" + data.id, "GET")
+                data = await apiStatus(data.url)
                 break;
             case "solved":
                 break;
@@ -351,7 +414,7 @@
         const cells = document.querySelectorAll('.rc-image-tile-wrapper img');
         const image = document.querySelector('.rc-image-tile-44')?.src;
 
-        const data = await apiFetch({
+        const data = await apiSolve({
             images: {
                 0: await getBase64FromUrl(image)
             },
@@ -377,7 +440,7 @@
         const cells = document.querySelectorAll('.rc-image-tile-wrapper img');
         const image = document.querySelector('.rc-image-tile-44')?.src;
 
-        const data = await apiFetch({
+        const data = await apiSolve({
             images: {
                 0: await getBase64FromUrl(image)
             },
@@ -402,7 +465,7 @@
         log("solveRE");
         const htmlTarget = document.querySelector('.rc-imageselect-desc-no-canonical strong')?.textContent;
         log(target, htmlTarget);
-        const data = await apiFetch({
+        const data = await apiSolve({
             images: {
                 0: image
             },
@@ -450,13 +513,8 @@
         });
     }
 
-    async function apiFetch(body, beta, v = "solve", method = "POST") {
-        if (v == "solve") {
-            log("apiFetch: request solve");
-        } else {
-            log("apiFetch: request solve result");
-        }
-
+    async function apiSolve(body, beta, v = "solve", method = "POST") {
+        log("apiFetch: request solve");        
         const options = {
             method,
             headers: {
@@ -470,6 +528,22 @@
         }
 
         const response = await fetch("https://" + (beta ? "recap" : cfg.get("PLAN")) + ".nocaptchaai.com/" + v, options)
+        const data = await response.json();
+        return data;
+    }
+
+    async function apiStatus(url) {
+        log("apiStatus: request solve result");
+        method = "GET";
+        const options = {
+            method,
+            headers: {
+                "Content-Type": "application/json",
+                apikey: cfg.get("APIKEY")
+            },
+        }
+
+        const response = await fetch(url, options)
         const data = await response.json();
         return data;
     }
