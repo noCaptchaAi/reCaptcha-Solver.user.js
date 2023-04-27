@@ -4,7 +4,7 @@
 // @name:ru      noCaptchaAI Решатель капчи reCaptcha v2 image
 // @name:sh-CN   noCaptchaAI 验证码求解器
 // @namespace    https://nocaptchaai.com
-// @version      3.8.10
+// @version      3.9.0
 // @run-at       document-start
 // @description  reCaptcha Solver automated Captcha Solver bypass Ai service. Free 6000 🔥solves/month! 50x⚡ faster than 2Captcha & others
 // @description:ar تجاوز برنامج Captcha Solver الآلي لخدمة reCaptcha Solver خدمة Ai. 6000 🔥 حل / شهر مجاني! 50x⚡ أسرع من 2Captcha وغيرها
@@ -14,7 +14,6 @@
 // @match        http*://*/*
 // @match        https://config.nocaptchaai.com/*
 // @icon         https://avatars.githubusercontent.com/u/110127579
-// @require      https://cdn.jsdelivr.net/npm/sweetalert2@11
 // @updateURL    https://github.com/noCaptchaAi/reCaptcha-Solver.user.js/raw/main/reCaptchaSolver.user.js
 // @downloadURL  https://github.com/noCaptchaAi/reCaptcha-Solver.user.js/raw/main/reCaptchaSolver.user.js
 // @grant        GM_addValueChangeListener
@@ -23,18 +22,21 @@
 // @grant        GM_openInTab
 // @grant        GM_setValue
 // @grant        GM_getValue
+// @grant        GM_info
 // @license      MIT
 // ==/UserScript==
 (async () => {
+    const softid = "recapUser_v" + GM_info.script.version;
     const searchParams = new URLSearchParams(location.search);
     const isWidget = /#frame=checkbox/.test(location.hash);
     const open = XMLHttpRequest.prototype.open;
 
-    const Toast = Swal.mixin({
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 1000
-    })
+    // removed require      https://cdn.jsdelivr.net/npm/sweetalert2@11
+    // const Toast = Swal.mixin({
+    //     position: "top-end",
+    //     showConfirmButton: false,
+    //     timer: 1000
+    // })
 
     const cfg = new config({
         APIKEY: "",
@@ -50,7 +52,7 @@
     let sitekey, wait = 666; //temp
 
     XMLHttpRequest.prototype.open = function () {
-        if(location.href.includes("recaptcha/api2")){
+        if (location.href.includes("recaptcha/api2")) {
             log(location.href);
             this.addEventListener("load", runSolver);
         }
@@ -76,9 +78,10 @@
         if (searchParams.has("apikey") && searchParams.has("plan") && document.referrer === "https://dash.nocaptchaai.com/") {
             cfg.set("APIKEY", searchParams.get("apikey"));
             cfg.set("PLAN", searchParams.get("plan"));
-            Toast.fire({
-                title: "noCaptchaAi.com \n Config Saved Successfully."
-            });
+            // Toast.fire({
+            //     title: "noCaptchaAi.com \n Config Saved Successfully."
+            // });
+            jsNotif("noCaptchaAi.com \n Config Saved Successfully.", 5000);
             history.replaceState({}, document.title, "/");
         }
 
@@ -91,9 +94,10 @@
                 const type = input.type === "checkbox" ? "checked" : "value";
                 input[type] = cfg.get(input.id);
                 input.addEventListener("change", function (e) {
-                    Toast.fire({
-                        title: "Your change has been saved"
-                    });
+                    // Toast.fire({
+                    //     title: "Your change has been saved"
+                    // });
+                    jsNotif("Your change has been saved", 5000);
                     cfg.set(input.id, e.target[type])
                 })
             }
@@ -197,36 +201,36 @@
         var style = window.getComputedStyle(element);
         if (element.offsetParent === null) {
             return false;
-        }else{
+        } else {
             return true;
-        }     
+        }
     }
 
     function isCaptchaFrame() {
-        if(document.getElementById('recaptcha-anchor')){
+        if (document.getElementById('recaptcha-anchor')) {
             return true;
         }
         return false;
     }
 
-    function hasCaptchas(){
+    function hasCaptchas() {
         var iframes = document.getElementsByTagName('iframe');
         for (var i = 0; i < iframes.length; i++) {
-          if (iframes[i].title === "reCAPTCHA") {
-            return true;
-          }
+            if (iframes[i].title === "reCAPTCHA") {
+                return true;
+            }
         }
         return false;
     }
 
-    function msgVisibleCaptchas(){
+    function msgVisibleCaptchas() {
         var iframes = document.getElementsByTagName('iframe');
         for (var i = 0; i < iframes.length; i++) {
             if (iframes[i].title === "reCAPTCHA") {
                 var visible = isFrameVisible(iframes[i]);
-                if(visible){
+                if (visible) {
                     iframes[i].contentWindow.postMessage('reCaptchaVisible', '*');
-                }else{
+                } else {
                     iframes[i].contentWindow.postMessage('reCaptchaHidden', '*');
                 }
             }
@@ -234,14 +238,14 @@
     }
 
     let captchaVisible = false;
-    window.addEventListener('message', function(event) {
-        if(event.data==="reCaptchaVisible"){
-            if(!captchaVisible){
+    window.addEventListener('message', function (event) {
+        if (event.data === "reCaptchaVisible") {
+            if (!captchaVisible) {
                 log("Captcha Visible");
                 captchaVisible = true;
             }
-        }else if(event.data==="reCaptchaHidden"){
-            if(captchaVisible){
+        } else if (event.data === "reCaptchaHidden") {
+            if (captchaVisible) {
                 log("Captcha Hidden");
                 captchaVisible = false;
             }
@@ -253,12 +257,12 @@
         await sleep(1000);
 
         if (!isCaptchaFrame()) {
-            if(hasCaptchas()){
+            if (hasCaptchas()) {
                 msgVisibleCaptchas();
-            }else{
+            } else {
                 break;
             }
-        }else if(captchaVisible){
+        } else if (captchaVisible) {
             if (cfg.get("CHECKBOX_AUTO_OPEN") && isWidget) {
                 const isSolved = document.querySelector("div.check")?.style.display === "block";
 
@@ -308,6 +312,7 @@
             target,
             type: 'split_33',
             method: "recaptcha2",
+            softid
         }, true);
 
         let result = await getResult(data, true);
@@ -343,18 +348,18 @@
         return false;
     }
 
-    function isSolveError() {
-        try {
-            // Check if try again message is shown
-            let err = document.querySelector(".rc-imageselect-incorrect-response").style.display !== 'none';
+    // function isSolveError() {
+    //     try {
+    //         // Check if try again message is shown
+    //         let err = document.querySelector(".rc-imageselect-incorrect-response").style.display !== 'none';
 
-            log("isSolveError: " + err);
-            return (err);
-        } catch (e) {
-            log("isSolveError fault: " + e);
-        }
-        return false;
-    }
+    //         log("isSolveError: " + err);
+    //         return (err);
+    //     } catch (e) {
+    //         log("isSolveError fault: " + e);
+    //     }
+    //     return false;
+    // }
 
     function recapReload() {
         // clear errors to prevent reloading the captcha twice in a row
@@ -363,27 +368,6 @@
 
         // press reload captcha button
         fireMouseEvents(document.querySelector("#recaptcha-reload-button"));
-    }
-
-    async function binary(data) {
-        const solutions = data.solution;
-        const solution = solutions.filter(index => index > 8);
-        const cells = document.querySelectorAll(".task-image .image");
-
-        for (const index of solutions) {
-            await sleep(wait);
-            fireMouseEvents(cells[index]);
-        }
-
-        const sent = random(700, 800);
-        log("binary: " + (solutions.length * wait) + sent, sent);
-        await sleep(sent);
-        log("☑️ sent!");
-        fireMouseEvents(document.querySelector(".button-submit"));
-
-        if (solution[0] && solutions[0] !== solution[0]) {
-            binary({ solution })
-        }
     }
 
     async function getResult(data, beta = false) {
@@ -421,6 +405,7 @@
             target,
             type: '44',
             method: "recaptcha2",
+            softid
         }, true)
 
         let result = await getResult(data, true);
@@ -447,6 +432,7 @@
             target,
             type: '44',
             method: "recaptcha2",
+            softid
         }, true)
 
         let result = await getResult(data, true);
@@ -472,6 +458,7 @@
             target: target || htmlTarget,
             type,
             method: "recaptcha2",
+            softid
         }, true);
 
         let result = await getResult(data, true);
@@ -514,7 +501,7 @@
     }
 
     async function apiSolve(body, beta, v = "solve", method = "POST") {
-        log("apiFetch: request solve");        
+        log("apiFetch: request solve");
         const options = {
             method,
             headers: {
@@ -633,6 +620,55 @@
 
     function log() {
         cfg.get("DEBUG_LOGS") && console.log.apply(this, arguments)
+    }
+
+    function jsNotif(message, duration) {
+        const toast = document.createElement("div");
+        toast.style.cssText = `
+          position: fixed;
+          top: 10%;
+          left: 0;
+          background-color: rgba(0, 0, 0, 0.8);
+          border-radius: 4px;
+          padding: 16px;
+          color: #fff;
+          font-size: calc(14px + 0.5vw);
+          font-family: 'Arial', sans-serif;
+          font-weight: bold;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          z-index: 9999;
+          transition: all 1s ease-in-out;
+        `;
+        toast.innerHTML = `${message}`;
+        document.body.appendChild(toast);
+
+        const style = document.createElement("style");
+        style.innerHTML = `
+          @keyframes slideIn {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(0); }
+          }
+      
+          @keyframes slideOut {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(100%); }
+          }
+        `;
+        document.head.appendChild(style);
+
+        // Slide in animation
+        toast.style.animation = "slideIn 1s forwards";
+        toast.style.animationFillMode = "forwards";
+
+        setTimeout(() => {
+            // Slide out animation
+            toast.style.animation = "slideOut 1s forwards";
+
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 1000);
+        }, duration || 3000);
     }
 
 })();
