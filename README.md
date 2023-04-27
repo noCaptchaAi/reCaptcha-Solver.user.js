@@ -20,10 +20,10 @@
 </p>
 <br />
 
-<h1><a target="_blank"  href="https://github.com/noCaptchaAi/hCaptchaSolver.user.js/raw/main/hCaptchaSolver.user.js">⚡ Click to Install</a></h1>
+<h1><a target="_blank"  href="https://github.com/noCaptchaAi/reCaptcha-Solver.user.js/raw/main/reCaptchaSolver.user.js">⚡ Click to Install</a></h1>
 
 <a target="_blank" href="https://github.com/noCaptchaAi/noCaptcha_extension">🔥 Chrome Extension</a> <br />
-<a target="_blank" href="https://github.com/noCaptchaAi/nocaptchaai-puppeteer">🔥 NPM puppeteer Package</a>
+<a target="_blank" href="https://github.com/noCaptchaAi/nocaptchaai-puppeteer">🔥 NPM hCaptcha puppeteer Package</a>
 </div>
 
 
