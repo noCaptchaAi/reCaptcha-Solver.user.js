@@ -469,7 +469,7 @@
             options.body = JSON.stringify(body)
         }
 
-        const response = await fetch("https://" + (beta ? "beta" : cfg.get("PLAN")) + ".nocaptchaai.com/" + v, options)
+        const response = await fetch("https://" + (beta ? "recap" : cfg.get("PLAN")) + ".nocaptchaai.com/" + v, options)
         const data = await response.json();
         return data;
     }
