@@ -4,7 +4,7 @@
 // @name:ru      noCaptchaAI Решатель капчи reCAPTCHA v2 image
 // @name:sh-CN   noCaptchaAI 验证码求解器
 // @namespace    https://nocaptchaai.com
-// @version      3.9.0
+// @version      3.9.1
 // @run-at       document-start
 // @description  reCaptcha Solver automated Captcha Solver bypass Ai service. Free 6000 🔥solves/month! 50x⚡ faster than 2Captcha & others
 // @description:ar تجاوز برنامج Captcha Solver الآلي لخدمة reCaptcha Solver خدمة Ai. 6000 🔥 حل / شهر مجاني! 50x⚡ أسرع من 2Captcha وغيرها
@@ -259,8 +259,6 @@
         if (!isCaptchaFrame()) {
             if (hasCaptchas()) {
                 msgVisibleCaptchas();
-            } else {
-                break;
             }
         } else if (captchaVisible) {
             if (cfg.get("CHECKBOX_AUTO_OPEN") && isWidget) {
