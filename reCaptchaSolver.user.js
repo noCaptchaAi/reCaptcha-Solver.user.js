@@ -4,7 +4,7 @@
 // @name:ru      noCaptchaAI Решатель капчи reCAPTCHA v2 image
 // @name:sh-CN   noCaptchaAI 验证码求解器
 // @namespace    https://nocaptchaai.com
-// @version      3.9.1
+// @version      3.9.2
 // @run-at       document-start
 // @description  reCaptcha Solver automated Captcha Solver bypass Ai service. Free 6000 🔥solves/month! 50x⚡ faster than 2Captcha & others
 // @description:ar تجاوز برنامج Captcha Solver الآلي لخدمة reCaptcha Solver خدمة Ai. 6000 🔥 حل / شهر مجاني! 50x⚡ أسرع من 2Captcha وغيرها
@@ -12,7 +12,6 @@
 // @description:zh-CN reCaptcha Solver 自动绕过 Ai 服务的 Captcha Solver。 免费 6000 🔥解决/月！ 比 2Captcha 和其他人快 50x⚡
 // @author       noCaptcha AI, Diego and Subcode
 // @match        http*://*/*
-// @match        https://config.nocaptchaai.com/*
 // @icon         https://avatars.githubusercontent.com/u/110127579
 // @updateURL    https://github.com/noCaptchaAi/reCaptcha-Solver.user.js/raw/main/reCaptchaSolver.user.js
 // @downloadURL  https://github.com/noCaptchaAi/reCaptcha-Solver.user.js/raw/main/reCaptchaSolver.user.js
@@ -28,15 +27,7 @@
 (async () => {
     const softid = "recapUser_v" + GM_info.script.version;
     const searchParams = new URLSearchParams(location.search);
-    const isWidget = /#frame=checkbox/.test(location.hash);
     const open = XMLHttpRequest.prototype.open;
-
-    // removed require      https://cdn.jsdelivr.net/npm/sweetalert2@11
-    // const Toast = Swal.mixin({
-    //     position: "top-end",
-    //     showConfirmButton: false,
-    //     timer: 1000
-    // })
 
     const cfg = new config({
         APIKEY: "",
@@ -66,15 +57,15 @@
     addMenu("❓ Discord", "https://discord.gg/E7FfzhZqzA");
     addMenu("❓ Telegram", "https://t.me/noCaptchaAi");
 
-    if (isWidget) {
-        log("loop running in bg"); //document.hasFocus()
+    //todo sitekey check
+    //log("loop running in bg"); //document.hasFocus()
 
-        GM_addValueChangeListener("APIKEY", function (key, oldValue, newValue, remote) {
-            log("The value of the '" + key + "' key has changed from '" + oldValue + "' to '" + newValue + "'");
-            location = location.href;
-        });
+    // GM_addValueChangeListener("APIKEY", function (key, oldValue, newValue, remote) {
+    //     log("The value of the '" + key + "' key has changed from '" + oldValue + "' to '" + newValue + "'");
+    //     location = location.href;
+    // });
 
-    } else if (location.hostname === "config.nocaptchaai.com") {
+    if (location.hostname === "config.nocaptchaai.com") {
         if (searchParams.has("apikey") && searchParams.has("plan") && document.referrer === "https://dash.nocaptchaai.com/") {
             cfg.set("APIKEY", searchParams.get("apikey"));
             cfg.set("PLAN", searchParams.get("plan"));
@@ -174,27 +165,22 @@
         //Check for errors in solve
         await sleep(500);
 
-        if (isRecapError()) {
+        if (isRecapError()) { //todo var uvresp to check errors
             recapReload();
         }
     }
 
     function recapExpired() {
         const recap = document.querySelector("#recaptcha-anchor");
-        if (recap?.classList.contains('recaptcha-checkbox-expired')) {
-            return true
-        }
-        return false;
+        return recap?.classList.contains('recaptcha-checkbox-expired');
     }
 
     function recapSolved() {
         let captcha = document.querySelector("#recaptcha-anchor");
         if (captcha) {
-            let Solved = captcha.getAttribute("aria-checked") === "true";
-            return Solved;
-        } else {
-            return true;
+            return captcha.getAttribute("aria-checked") === "true";
         }
+        return true;
     }
 
     function isFrameVisible(element) {
@@ -261,18 +247,7 @@
                 msgVisibleCaptchas();
             }
         } else if (captchaVisible) {
-            if (cfg.get("CHECKBOX_AUTO_OPEN") && isWidget) {
-                const isSolved = document.querySelector("div.check")?.style.display === "block";
-
-                if (isSolved && !cfg.get("LOOP")) {
-                    log("found solved");
-                    // location.reload();
-                    break;
-                }
-
-                fireMouseEvents(document.querySelector("#checkbox"))
-
-            } else if (cfg.get("CHECKBOX_AUTO_OPEN") && document.contains(document.querySelector('.recaptcha-checkbox')) && !captchaOpened) {
+            if (cfg.get("CHECKBOX_AUTO_OPEN") && document.contains(document.querySelector('.recaptcha-checkbox')) && !captchaOpened) {
                 log("opening recaptcha");
                 captchaOpened = true;
                 fireMouseEvents(document.querySelector("#recaptcha-anchor"));
@@ -292,6 +267,7 @@
         while (document.querySelectorAll('.rc-image-tile-11').length < array.length && document.querySelector('.rc-imageselect-dynamic-selected').length === 0) {
             await sleep(100);
         }
+        
         log("solveRED");
         let cells = document.querySelectorAll('.rc-image-tile-wrapper img');
 
@@ -519,9 +495,8 @@
 
     async function apiStatus(url) {
         log("apiStatus: request solve result");
-        method = "GET";
         const options = {
-            method,
+            method: "GET",
             headers: {
                 "Content-Type": "application/json",
                 apikey: cfg.get("APIKEY")
