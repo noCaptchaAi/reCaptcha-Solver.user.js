@@ -4,7 +4,7 @@
 // @name:ru      noCaptchaAI Решатель капчи reCAPTCHA v2 image
 // @name:sh-CN   noCaptchaAI 验证码求解器
 // @namespace    https://nocaptchaai.com
-// @version      3.9.2
+// @version      3.9.3
 // @run-at       document-start
 // @description  reCaptcha Solver automated Captcha Solver bypass Ai service. Free 6000 🔥solves/month! 50x⚡ faster than 2Captcha & others
 // @description:ar تجاوز برنامج Captcha Solver الآلي لخدمة reCaptcha Solver خدمة Ai. 6000 🔥 حل / شهر مجاني! 50x⚡ أسرع من 2Captcha وغيرها
@@ -57,13 +57,11 @@
     addMenu("❓ Discord", "https://discord.gg/E7FfzhZqzA");
     addMenu("❓ Telegram", "https://t.me/noCaptchaAi");
 
-    //todo sitekey check
-    //log("loop running in bg"); //document.hasFocus()
-
-    // GM_addValueChangeListener("APIKEY", function (key, oldValue, newValue, remote) {
-    //     log("The value of the '" + key + "' key has changed from '" + oldValue + "' to '" + newValue + "'");
-    //     location = location.href;
-    // });
+    // onChange listener for APIKEY, refreshes page when APIKEY has been updated.
+    GM_addValueChangeListener("APIKEY", function (key, oldValue, newValue, remote) {
+        log("The value of the '" + key + "' key has changed from '" + oldValue + "' to '" + newValue + "'");
+        location = location.href;
+    });
 
     if (location.hostname === "config.nocaptchaai.com") {
         if (searchParams.has("apikey") && searchParams.has("plan") && document.referrer === "https://dash.nocaptchaai.com/") {
@@ -137,23 +135,23 @@
                     const target = data.at(4).at(1).at(6);
                     await solveRE(image, 33, target, type === "dynamic");
 
-                } else if (type === "multicaptcha") {
-                    currentType = type;
-                    await solveREM();
-
-                } else if (type === "tileselect") {
+                } else if (type === "multicaptcha" || type === "tileselect") {
+                    log("solve: "+type);
                     currentType = type;
                     await solveRE44();
 
                 } else if (type === "nocaptcha") {
                     log("captcha solve done");
                     return;
+
                 } else if (type === "doscaptcha") {
                     log("automation detected");
                     return;
+
                 } else if (currentType == "multicaptcha") {
-                    setTimeout(solveREM, 1000);
+                    setTimeout(solveRE44, 1000);
                     return;
+
                 }
             }
 
@@ -264,7 +262,11 @@
 
     //Solve function for dynamic 3x3, checks previously solved indexes
     async function solveRED(target, array) {
-        while (document.querySelectorAll('.rc-image-tile-11').length < array.length && document.querySelector('.rc-imageselect-dynamic-selected').length === 0) {
+        if (array.length === 0) {
+            return recapReload();
+        }
+
+        while (document.querySelectorAll(".rc-image-tile-11, rc-imageselect-dynamic-selected").length < array.length) {
             await sleep(100);
         }
         
@@ -365,34 +367,6 @@
     }
 
     //Solve function for Recaptcha Multi
-    async function solveREM() {
-        log("solveREM");
-
-        const target = document.querySelector('.rc-imageselect-desc-no-canonical strong')?.textContent
-        const cells = document.querySelectorAll('.rc-image-tile-wrapper img');
-        const image = document.querySelector('.rc-image-tile-44')?.src;
-
-        const data = await apiSolve({
-            images: {
-                0: await getBase64FromUrl(image)
-            },
-            target,
-            type: '44',
-            method: "recaptcha2",
-            softid
-        }, true)
-
-        let result = await getResult(data, true);
-
-        for (const index of result.solution) {
-            fireMouseEvents(cells[index]);
-            await sleep(500);
-        }
-
-        submit();
-    }
-
-    //Solve function for Recaptcha Multi
     async function solveRE44() {
         log("solveRE44");
         const target = document.querySelector('.rc-imageselect-desc-no-canonical strong')?.textContent
@@ -416,7 +390,6 @@
             await sleep(wait);
         }
 
-        await sleep(1000);
         submit();
     }
 
